@@ -28,8 +28,8 @@ public class QuizActivity extends AppCompatActivity {
 
     private int mCurrentIndex = 0;
     //
-    private int mCorrectIndex = 0;
-
+    private int mScore = 0;
+    private int mNumberAnswer = 0;
     private boolean[] CheckQuestion = new boolean[mQuestionsBank.length];
     //
 
@@ -99,8 +99,8 @@ public class QuizActivity extends AppCompatActivity {
     //wyswietlanie ile poprawnych odpowiedzi dano
     private void checkOdpowiedzi()
     {
-       if(mCorrectIndex == mQuestionsBank.length)  {
-            String odpowiedzi_string = getString(R.string.odpowiedzi_toast, mCorrectIndex);
+       if(mNumberAnswer == mQuestionsBank.length)  {
+            String odpowiedzi_string = getString(R.string.odpowiedzi_toast, mScore);
             Toast.makeText(this, odpowiedzi_string, Toast.LENGTH_LONG).show();
         }
 
@@ -135,21 +135,24 @@ public class QuizActivity extends AppCompatActivity {
         if (userPressedTrue == answerIsTrue) {
             toastMessageId = R.string.correct_toast;
             //
-            CheckQuestion[mCorrectIndex] = true;
-            mCorrectIndex += 1;
+            mScore += 1;
+           // CheckQuestion[mCurrentIndex] = true;
             //
-            checkOdpowiedzi();
+            mTrueButton.setEnabled(false);
+            mFalseButton.setEnabled(false);
         } else {
             toastMessageId = R.string.incorrect_toast;
             //
-            CheckQuestion[mCorrectIndex] = false;
+           // CheckQuestion[mCurrentIndex] = true;
+            mTrueButton.setEnabled(false);
+            mFalseButton.setEnabled(false);
             //
         }
-
-
+        CheckQuestion[mCurrentIndex] = true;
+        mNumberAnswer +=1;
+        checkOdpowiedzi();
         Toast toast = Toast.makeText(this, toastMessageId, Toast.LENGTH_SHORT);
         toast.show();
         toast.setGravity(Gravity.TOP,0,200);
-
     }
 }
