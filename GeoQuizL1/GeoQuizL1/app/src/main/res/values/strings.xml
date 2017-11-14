@@ -23,4 +23,5 @@
     <string name="cheat_button_label">Cheat</string>
     <string name="message_for_cheaters">Wiem ze chcesz zobaczyc odpowiedz</string>
 
+    <string name="used_all_tokens">Ops! Juz nie masz zadnych tokenow</string>
 </resources>

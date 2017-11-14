@@ -61,6 +61,19 @@ This means, in which direction it's contents should align.
         android:padding="24dp"
         android:id="@+id/answered_text_view" />
 
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:padding="24dp"
+        android:id="@+id/cheat_used_all_tokens" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:padding="24dp"
+        android:id="@+id/aplik_level_text_view" />
+
+
 
     <LinearLayout
         android:orientation="horizontal"

@@ -1,6 +1,7 @@
 package pl.wroc.uni.ift.android.quizactivity;
 
 import android.content.Intent;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.view.Gravity;
@@ -20,7 +21,9 @@ public class QuizActivity extends AppCompatActivity {
     private static final String KEY_SCORE = "score";
     private static final String KEY_NUMBERANSWER = "numberAnswer";
     private static final String KEY_CHECKQUESTIONS = "checkquestions";
+    private static final String TOKEN = "CurrentTokens";
 
+    private String androidOS = Build.VERSION.RELEASE;
 
     private Button mTrueButton;
     private Button mFalseButton;
@@ -30,6 +33,8 @@ public class QuizActivity extends AppCompatActivity {
 
     private TextView mQuestionTextView;
     private TextView mAnsweredTextView;
+    private TextView mTokenTextView;
+    private TextView mApplikLevelTextView;
 
     private Question[] mQuestionsBank = new Question[]{
             new Question(R.string.question_stolica_polski, true),
@@ -42,6 +47,11 @@ public class QuizActivity extends AppCompatActivity {
     //
     private int mScore = 0;
     private int mNumberAnswer = 0;
+
+    private int mCheatTokens = 3;
+    private int mAnsweredQuestions = 0;
+
+
 
     private boolean[] CheckQuestion = new boolean[mQuestionsBank.length];
     //
@@ -68,6 +78,7 @@ public class QuizActivity extends AppCompatActivity {
         {
             //jesli instnieje t owykonuje sie ponizszy kod
             //przywracajacy zmiene do stanow zapisanych w instancji
+            mCheatTokens = savedInstanceState.getInt(TOKEN);
             mCurrentIndex = savedInstanceState.getInt(KEY_INDEX);
             Log.i(TAG, String.format("onCreate(): Restoring saved index: %d", mCurrentIndex));
             // here in addition we are restoring our Question array;
@@ -102,6 +113,19 @@ public class QuizActivity extends AppCompatActivity {
                 startActivityForResult(intent, CHEAT_REQEST_CODE);
             }
         });
+
+        Log.i(TAG, String.format("Masz tyle tokenow: %d", mCheatTokens));
+
+        if(mCheatTokens <=  0)
+        {
+            mTokenTextView = (TextView) findViewById(R.id.cheat_used_all_tokens);
+            mTokenTextView.setText(R.string.used_all_tokens);
+            mCheatButton.setVisibility(View.GONE);
+        }
+
+
+        mApplikLevelTextView = (TextView) findViewById(R.id.aplik_level_text_view);
+        mApplikLevelTextView.setText("Android version: " + androidOS);
 
         mAnsweredTextView = (TextView) findViewById(R.id.answered_text_view);
 
@@ -171,6 +195,13 @@ public class QuizActivity extends AppCompatActivity {
                                 R.string.message_for_cheaters,
                                 Toast.LENGTH_LONG).show();
                         mIsCheater[mCurrentIndex] = true;
+                        mCheatTokens = mCheatTokens - 1;
+                        if(mCheatTokens <= 0)
+                        {
+                            mTokenTextView = (TextView) findViewById(R.id.cheat_used_all_tokens);
+                            mTokenTextView.setText(R.string.used_all_tokens);
+                            mCheatButton.setVisibility(View.GONE);
+                        }
                     }
                 }
             }
@@ -182,10 +213,10 @@ public class QuizActivity extends AppCompatActivity {
     public void onSaveInstanceState(Bundle savedInstanceState) {
         super.onSaveInstanceState(savedInstanceState);
         Log.i(TAG, String.format("onSaveInstanceState: current index %d ", mCurrentIndex) );
-
+        Log.i(TAG, String.format("onSaveInstanceState: current tokens %d ", mCheatTokens) );
         //we still have to store current index to correctly reconstruct state of our app
         savedInstanceState.putInt(KEY_INDEX, mCurrentIndex);
-
+        savedInstanceState.putInt(TOKEN, mCheatTokens);
         // because Question is implementing Parcelable interface
         // we are able to store array in Bundle
         savedInstanceState.putBooleanArray("checkquestions",CheckQuestion);
