@@ -1,5 +1,6 @@
 package pl.wroc.uni.ift.android.quizactivity;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.view.Gravity;
@@ -8,16 +9,27 @@ import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.util.Log;
 
 public class QuizActivity extends AppCompatActivity {
+
+    private static final String TAG = "QuizActivity";
+    private static final String KEY_INDEX = "index";
+    private static final String KEY_QUESTIONS = "questions";
+    private static final int CHEAT_REQEST_CODE = 0;
+    private static final String KEY_SCORE = "score";
+    private static final String KEY_NUMBERANSWER = "numberAnswer";
+    private static final String KEY_CHECKQUESTIONS = "checkquestions";
 
 
     private Button mTrueButton;
     private Button mFalseButton;
     private ImageButton mNextButton;
     private ImageButton mPreviousButton;
+    private Button mCheatButton;
 
     private TextView mQuestionTextView;
+    private TextView mAnsweredTextView;
 
     private Question[] mQuestionsBank = new Question[]{
             new Question(R.string.question_stolica_polski, true),
@@ -30,8 +42,10 @@ public class QuizActivity extends AppCompatActivity {
     //
     private int mScore = 0;
     private int mNumberAnswer = 0;
+
     private boolean[] CheckQuestion = new boolean[mQuestionsBank.length];
     //
+    private boolean[] mIsCheater = {false, false, false, false};
 
 
 
@@ -42,9 +56,54 @@ public class QuizActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Log.d(TAG, "onCreate() called");
+
         setTitle(R.string.app_name);
         // inflating view objects
         setContentView(R.layout.activity_quiz);
+
+        //check for saved data
+        //Sprawdzinie czy istnieje juz zapisana instancja
+        if(savedInstanceState != null)
+        {
+            //jesli instnieje t owykonuje sie ponizszy kod
+            //przywracajacy zmiene do stanow zapisanych w instancji
+            mCurrentIndex = savedInstanceState.getInt(KEY_INDEX);
+            Log.i(TAG, String.format("onCreate(): Restoring saved index: %d", mCurrentIndex));
+            // here in addition we are restoring our Question array;
+            // getParcelableArray returns object of type Parcelable[]
+            // since our Question is implementing this interface (Parcelable)
+            // we are allowed to cast the Parcelable[] to desired type which
+            // is the Question[] here.
+            mScore = savedInstanceState.getInt(KEY_SCORE);
+            mNumberAnswer = savedInstanceState.getInt(KEY_NUMBERANSWER);
+            CheckQuestion = savedInstanceState.getBooleanArray(KEY_CHECKQUESTIONS);
+            mQuestionsBank = (Question []) savedInstanceState.getParcelableArray(KEY_QUESTIONS);
+            if(mQuestionsBank == null)
+            {
+                Log.e(TAG,"Question bank array was not correctly returned from Bundle");
+            }
+            else
+            {
+                Log.i(TAG, "Question bank array was correctly returned from Bundle");
+            }
+        }
+
+
+        mCheatButton = (Button) findViewById(R.id.button_cheat);
+        mCheatButton.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View view){
+                //sprawdza czy odpowiedz jest prawda lub falsz
+                boolean currentAnswer = mQuestionsBank[mCurrentIndex].isAnswerTrue();
+                //przekazuje ta wartosc do intent
+                Intent intent = CheatActivity.newIntent(QuizActivity.this, currentAnswer,mIsCheater[mCurrentIndex]);
+
+                startActivityForResult(intent, CHEAT_REQEST_CODE);
+            }
+        });
+
+        mAnsweredTextView = (TextView) findViewById(R.id.answered_text_view);
 
         mQuestionTextView = (TextView) findViewById(R.id.question_text_view);
         mQuestionTextView.setOnClickListener(new View.OnClickListener(){
@@ -95,6 +154,53 @@ public class QuizActivity extends AppCompatActivity {
 
         updateQuestion();
     }
+    // Wykonuje sie po powrocie z innej instancji i otrzymaniu kodu zwrotnego
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data)
+    {
+        if(resultCode != RESULT_OK){
+            return;
+        }
+        if(requestCode == CHEAT_REQEST_CODE){
+            if(data != null)
+            {
+                boolean answerWasShown = CheatActivity.wasAnswerShown(data);
+                if(answerWasShown){
+                    if(!mIsCheater[mCurrentIndex]){
+                        Toast.makeText(this,
+                                R.string.message_for_cheaters,
+                                Toast.LENGTH_LONG).show();
+                        mIsCheater[mCurrentIndex] = true;
+                    }
+                }
+            }
+        }
+    }
+
+    //Zapisanie instancji po obroceniu ekranu
+    @Override
+    public void onSaveInstanceState(Bundle savedInstanceState) {
+        super.onSaveInstanceState(savedInstanceState);
+        Log.i(TAG, String.format("onSaveInstanceState: current index %d ", mCurrentIndex) );
+
+        //we still have to store current index to correctly reconstruct state of our app
+        savedInstanceState.putInt(KEY_INDEX, mCurrentIndex);
+
+        // because Question is implementing Parcelable interface
+        // we are able to store array in Bundle
+        savedInstanceState.putBooleanArray("checkquestions",CheckQuestion);
+        savedInstanceState.putParcelableArray(KEY_QUESTIONS, mQuestionsBank);
+        savedInstanceState.putInt(KEY_SCORE, mScore);
+        savedInstanceState.putInt(KEY_NUMBERANSWER, mNumberAnswer);
+        savedInstanceState.putBooleanArray("isCheater", mIsCheater);
+    }
+
+    //SPRECYZOWANIE CO SIĘ DZIEJE PRZY PRZYWRACANIU INSTANCJI
+   // protected void onRestoreInstanceState(Bundle savedInstanceState) {
+     //   super.onRestoreInstanceState(savedInstanceState);
+       // mIsCheater = savedInstanceState.getBooleanArray("isCheater");
+    //}
+
 
     //wyswietlanie ile poprawnych odpowiedzi dano
     private void checkOdpowiedzi()
@@ -106,9 +212,6 @@ public class QuizActivity extends AppCompatActivity {
 
     }
 
-
-
-
     // wylaczanie mozliwosci ponownego podania odpowiedzi na pytanie
     private void updateQuestion() {
         int question = mQuestionsBank[mCurrentIndex].getTextResId();
@@ -117,11 +220,13 @@ public class QuizActivity extends AppCompatActivity {
         if (CheckQuestion[mCurrentIndex] == true) {
             mTrueButton.setEnabled(false);
             mFalseButton.setEnabled(false);
+
         }
         else
         {
             mTrueButton.setEnabled(true);
             mFalseButton.setEnabled(true);
+
         }
         //
 
