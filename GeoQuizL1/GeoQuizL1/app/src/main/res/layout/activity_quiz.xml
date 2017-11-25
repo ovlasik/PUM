@@ -152,6 +152,12 @@ This means, in which direction it's contents should align.
             android:id="@+id/button_cheat"
             android:text="@string/cheat_button_label"
             android:layout_weight="2"/>
+        <Button
+            android:id="@+id/questions_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:text="SHOW QUESTIONS LIST" />
 
     </LinearLayout>
 

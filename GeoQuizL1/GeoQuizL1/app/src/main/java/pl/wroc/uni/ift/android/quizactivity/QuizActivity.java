@@ -20,7 +20,7 @@ public class QuizActivity extends AppCompatActivity {
     private static final int CHEAT_REQEST_CODE = 0;
     private static final String KEY_SCORE = "score";
     private static final String KEY_NUMBERANSWER = "numberAnswer";
-    private static final String KEY_CHECKQUESTIONS = "checkquestions";
+    private static final String KEY_LockedQuestions = "Lockedquestions";
     private static final String TOKEN = "CurrentTokens";
 
     private String androidOS = Build.VERSION.RELEASE;
@@ -30,30 +30,25 @@ public class QuizActivity extends AppCompatActivity {
     private ImageButton mNextButton;
     private ImageButton mPreviousButton;
     private Button mCheatButton;
+    private Button mQuestionsListButton;
 
     private TextView mQuestionTextView;
     private TextView mAnsweredTextView;
     private TextView mTokenTextView;
     private TextView mApplikLevelTextView;
 
-    private Question[] mQuestionsBank = new Question[]{
-            new Question(R.string.question_stolica_polski, true),
-            new Question(R.string.question_stolica_dolnego_slaska, false),
-            new Question(R.string.question_sniezka, true),
-            new Question(R.string.question_wisla, true)
-    };
+    private QuestionBank mQuestionsBank = QuestionBank.getInstance();
 
     private int mCurrentIndex = 0;
     //
     private int mScore = 0;
     private int mNumberAnswer = 0;
-
     private int mCheatTokens = 3;
     private int mAnsweredQuestions = 0;
 
 
 
-    private boolean[] CheckQuestion = new boolean[mQuestionsBank.length];
+    private int [] mLockedQuestions = {-1,-1,-1,-1};
     //
     private boolean[] mIsCheater = {false, false, false, false};
 
@@ -88,8 +83,8 @@ public class QuizActivity extends AppCompatActivity {
             // is the Question[] here.
             mScore = savedInstanceState.getInt(KEY_SCORE);
             mNumberAnswer = savedInstanceState.getInt(KEY_NUMBERANSWER);
-            CheckQuestion = savedInstanceState.getBooleanArray(KEY_CHECKQUESTIONS);
-            mQuestionsBank = (Question []) savedInstanceState.getParcelableArray(KEY_QUESTIONS);
+            mLockedQuestions = savedInstanceState.getIntArray(KEY_LockedQuestions);
+            //mQuestionsBank = (Question []) savedInstanceState.getParcelableArray(KEY_QUESTIONS);
             if(mQuestionsBank == null)
             {
                 Log.e(TAG,"Question bank array was not correctly returned from Bundle");
@@ -100,13 +95,16 @@ public class QuizActivity extends AppCompatActivity {
             }
         }
 
+        mQuestionsBank.setQuestions();
+
 
         mCheatButton = (Button) findViewById(R.id.button_cheat);
         mCheatButton.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View view){
                 //sprawdza czy odpowiedz jest prawda lub falsz
-                boolean currentAnswer = mQuestionsBank[mCurrentIndex].isAnswerTrue();
+
+                boolean currentAnswer = mQuestionsBank.getQuestion(mCurrentIndex).isAnswerTrue();
                 //przekazuje ta wartosc do intent
                 Intent intent = CheatActivity.newIntent(QuizActivity.this, currentAnswer,mIsCheater[mCurrentIndex]);
 
@@ -116,12 +114,12 @@ public class QuizActivity extends AppCompatActivity {
 
         Log.i(TAG, String.format("Masz tyle tokenow: %d", mCheatTokens));
 
-        if(mCheatTokens <=  0)
-        {
-            mTokenTextView = (TextView) findViewById(R.id.cheat_used_all_tokens);
-            mTokenTextView.setText(R.string.used_all_tokens);
-            mCheatButton.setVisibility(View.GONE);
-        }
+        //if(mCheatTokens <=  0)
+        //{
+          //  mTokenTextView = (TextView) findViewById(R.id.cheat_used_all_tokens);
+            //mTokenTextView.setText(R.string.used_all_tokens);
+            //mCheatButton.setVisibility(View.GONE);
+        //}
 
 
         mApplikLevelTextView = (TextView) findViewById(R.id.aplik_level_text_view);
@@ -133,7 +131,7 @@ public class QuizActivity extends AppCompatActivity {
         mQuestionTextView.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View view){
-                mCurrentIndex = (mCurrentIndex +1 )% mQuestionsBank.length;
+                mCurrentIndex = (mCurrentIndex +1 )% mQuestionsBank.size();
                 updateQuestion();
             }
         });
@@ -160,7 +158,7 @@ public class QuizActivity extends AppCompatActivity {
         mNextButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                mCurrentIndex = (mCurrentIndex + 1) % mQuestionsBank.length;
+                mCurrentIndex = (mCurrentIndex + 1) % mQuestionsBank.size();
                 updateQuestion();
             }
         });
@@ -171,8 +169,18 @@ public class QuizActivity extends AppCompatActivity {
             public void onClick(View view){
                 mCurrentIndex = (mCurrentIndex - 1);
                 if(mCurrentIndex < 0 )
-                    mCurrentIndex = mQuestionsBank.length - 1;
+                    mCurrentIndex = mQuestionsBank.size() - 1;
                 updateQuestion();
+            }
+        });
+
+        updateQuestion();
+        mQuestionsListButton = (Button) findViewById(R.id.questions_button);
+        mQuestionsListButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(QuizActivity.this,QuestionListActivity.class);
+                startActivity(intent);
             }
         });
 
@@ -217,10 +225,11 @@ public class QuizActivity extends AppCompatActivity {
         //we still have to store current index to correctly reconstruct state of our app
         savedInstanceState.putInt(KEY_INDEX, mCurrentIndex);
         savedInstanceState.putInt(TOKEN, mCheatTokens);
+        savedInstanceState.putIntArray(KEY_LockedQuestions,mLockedQuestions);
         // because Question is implementing Parcelable interface
         // we are able to store array in Bundle
-        savedInstanceState.putBooleanArray("checkquestions",CheckQuestion);
-        savedInstanceState.putParcelableArray(KEY_QUESTIONS, mQuestionsBank);
+        //savedInstanceState.putBooleanArray("checkquestions",CheckQuestion);
+        // savedInstanceState.putParcelableArray(KEY_QUESTIONS, mQuestionsBank);
         savedInstanceState.putInt(KEY_SCORE, mScore);
         savedInstanceState.putInt(KEY_NUMBERANSWER, mNumberAnswer);
         savedInstanceState.putBooleanArray("isCheater", mIsCheater);
@@ -236,7 +245,7 @@ public class QuizActivity extends AppCompatActivity {
     //wyswietlanie ile poprawnych odpowiedzi dano
     private void checkOdpowiedzi()
     {
-       if(mNumberAnswer == mQuestionsBank.length)  {
+       if(mNumberAnswer == mQuestionsBank.size())  {
             String odpowiedzi_string = getString(R.string.odpowiedzi_toast, mScore);
             Toast.makeText(this, odpowiedzi_string, Toast.LENGTH_LONG).show();
         }
@@ -245,27 +254,32 @@ public class QuizActivity extends AppCompatActivity {
 
     // wylaczanie mozliwosci ponownego podania odpowiedzi na pytanie
     private void updateQuestion() {
-        int question = mQuestionsBank[mCurrentIndex].getTextResId();
-        mQuestionTextView.setText(question);
+        //int question = mQuestionsBank.getQuestion(mCurrentIndex).getTextResId();
+        //mQuestionTextView.setText(question);
         //
-        if (CheckQuestion[mCurrentIndex] == true) {
-            mTrueButton.setEnabled(false);
-            mFalseButton.setEnabled(false);
+        if (!(mLockedQuestions[mCurrentIndex] == mCurrentIndex)) {
+            mTrueButton.setVisibility(View.VISIBLE);
+            mFalseButton.setVisibility(View.VISIBLE);
 
         }
         else
         {
-            mTrueButton.setEnabled(true);
-            mFalseButton.setEnabled(true);
+            mTrueButton.setVisibility(View.GONE);
+            mFalseButton.setVisibility(View.GONE);
 
         }
         //
-
+        int question = mQuestionsBank.getQuestion(mCurrentIndex).getTextResId();
+        mQuestionTextView.setText(question);
     }
 
     private void checkAnswer(boolean userPressedTrue) {
-        boolean answerIsTrue = mQuestionsBank[mCurrentIndex].isAnswerTrue();
+        boolean answerIsTrue = mQuestionsBank.getQuestion(mCurrentIndex).isAnswerTrue();
 
+
+        mLockedQuestions[mCurrentIndex] = mCurrentIndex;
+        mTrueButton.setVisibility(View.GONE);
+        mFalseButton.setVisibility(View.GONE);
         int toastMessageId = 0;
 
         if (userPressedTrue == answerIsTrue) {
@@ -274,17 +288,17 @@ public class QuizActivity extends AppCompatActivity {
             mScore += 1;
            // CheckQuestion[mCurrentIndex] = true;
             //
-            mTrueButton.setEnabled(false);
-            mFalseButton.setEnabled(false);
+            //mTrueButton.setEnabled(false);
+            //mFalseButton.setEnabled(false);
         } else {
             toastMessageId = R.string.incorrect_toast;
             //
            // CheckQuestion[mCurrentIndex] = true;
-            mTrueButton.setEnabled(false);
-            mFalseButton.setEnabled(false);
+            //mTrueButton.setEnabled(false);
+            //mFalseButton.setEnabled(false);
             //
         }
-        CheckQuestion[mCurrentIndex] = true;
+        //mLockedQuestions[mCurrentIndex] = true;
         mNumberAnswer +=1;
         checkOdpowiedzi();
         Toast toast = Toast.makeText(this, toastMessageId, Toast.LENGTH_SHORT);
