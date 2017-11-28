@@ -95,7 +95,7 @@ public class QuizActivity extends AppCompatActivity {
             }
         }
 
-        mQuestionsBank.setQuestions();
+
 
 
         mCheatButton = (Button) findViewById(R.id.button_cheat);
@@ -175,6 +175,7 @@ public class QuizActivity extends AppCompatActivity {
         });
 
         updateQuestion();
+
         mQuestionsListButton = (Button) findViewById(R.id.questions_button);
         mQuestionsListButton.setOnClickListener(new View.OnClickListener() {
             @Override
