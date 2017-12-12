@@ -8,7 +8,7 @@
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".QuizActivity">
+        <activity android:name=".QuestionListActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -17,8 +17,9 @@
         </activity>
         <activity android:name=".CheatActivity">
         </activity>
-        <activity android:name=".QuestionListActivity">
-        </activity>
+        <activity android:name=".QuizPager"/>
+        <!--<activity android:name=".QuestionListActivity">-->
+        <!--</activity>-->
     </application>
 
 </manifest>

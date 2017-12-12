@@ -4,30 +4,13 @@ import android.content.Context;
 import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.support.v7.widget.DividerItemDecoration;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
 
-import java.util.ArrayList;
+import android.support.v4.app.Fragment;
 
-public class QuestionListActivity extends AppCompatActivity {
-
-    //obiekt recycler view
-    private RecyclerView mRecyclerView;
-
-
+public class QuestionListActivity extends SingleFragmentActivity {
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_questionlist);
-
-
-        mRecyclerView = (RecyclerView) findViewById(R.id.my_recycler);
-        mRecyclerView.setHasFixedSize(true);
-
-        mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
-        //wysylamy do adaptera liste pytan
-        mRecyclerView.setAdapter(new QuestionAdapter(QuestionBank.getInstance().getQuestions(), mRecyclerView));
-
+    protected Fragment createFragment()
+    {
+        return new QuestionListFragment();
     }
 }
