@@ -1,46 +1,46 @@
-package pl.wroc.uni.ift.android.quizactivity;
 
-/**
- * Created by jpola on 26.07.17.
- */
+package pl.wroc.uni.ift.android.quizactivity;
 
 import android.os.Parcel;
 import android.os.Parcelable;
 
 
-//Parcelable daje mozliwosc przeslania calej klasy do Bundle
+// Parcelable - daje możliwość przesłania całej klasy do Bundle
 public class Question implements Parcelable {
 
     private int mTextResId;
+    private String mText;
     private boolean mAnswerTrue;
 
     public Question(int textResId, boolean answerTrue)    {
 
-        mTextResId=textResId;
+        mTextResId = textResId;
         mAnswerTrue = answerTrue;
+        //setText("NULL");
     }
 
-    // Wymagane metody z interfejsu Parcelable
+    // Required methods from Parcelable interface
     @Override
-    public int describeContents()
-    {
-        return 0;
-    }
+    public int describeContents() { return 0; }
 
+    // How to write our class to Parcel object
+    // Order does matter!
     @Override
-    public void writeToParcel(Parcel destination, int flag){
-        //wpisujemy mTextResId
+    public void writeToParcel(Parcel destination, int flag) {
+        // write mTextResId
         destination.writeInt(mTextResId);
-        // nie ma domyślnej opcji writeBoolean
-        // użyjemy int 0 dla false, a 1 dla prawdziwego zamiast
+
+        // there is not default writeBoolean option
+        // we will use int 0 for false, and 1 for true instead
         int value = mAnswerTrue ? 1 : 0;
         destination.writeInt(value);
     }
-    // prywatny konstruktor Question do utworzenia z obiektu Parcel
-    // pamiętaj, aby zamówienie było ważne, patrz metoda writeToParcel
-    // bazując na metodzie writeToParcel wiemy, że musimy czytać
-    // dwie kolejne liczby całkowite z paczki. Pierwszy to identyfikator zasobu dla pytania
-    // drugi jest odpowiedzią na pytanie (true lub false) zapisaną tutaj jako int.
+
+    // private constructor for Question to be created from Parcel object
+    // remember order does matter see writeToParcel method
+    // base on writeToParcel method we know that we have to read
+    // two consecutive integer numbers from parcel. First is resource id for question
+    // second one is the answer for question (true or false) stored here as int.
     private Question(Parcel in)
     {
         mTextResId = in.readInt();
@@ -50,8 +50,8 @@ public class Question implements Parcelable {
         } else  { mAnswerTrue = false; }
     }
 
-    // Interfejs parcelowy wymaga zaimplementowania pola statycznego CREATOR, które jest używane
-    // wewnętrznie. Tutaj wdrażamy to w locie
+    // Parcelable interface requires to implement static field CREATOR which is used
+    // internally. Here we are implementing this on the fly
     public static final Parcelable.Creator<Question> CREATOR =
             new Parcelable.Creator<Question>()
             {
@@ -62,14 +62,24 @@ public class Question implements Parcelable {
                     return question;
                 }
 
-                // jest to druga metoda wymagana przez klasę <Pytanie> Creatora
-                // właśnie zwracamy tablicę pytań [] o rozmiarze = rozmiar;
+                // this is the second method required by Creator<Question> class
+                // we are just returning Question[] array of size = size;
                 public Question[] newArray(int size) { return new Question[size]; }
 
             };
 
+
+
     public int getTextResId() {
         return mTextResId;
+    }
+
+    public void setText(String text) {
+        mText = text;
+    }
+
+    public String getText() {
+        return mText;
     }
 
     public void setTextResId(int textResId) {

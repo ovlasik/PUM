@@ -7,6 +7,9 @@ import android.os.Bundle;
 
 import android.support.v4.app.Fragment;
 
+
+// QuestionListActivity dziedziczy po SingleFragmentActivity więc
+// wystarczy nadpisać metodę która zwróci logikę fragmentu
 public class QuestionListActivity extends SingleFragmentActivity {
     @Override
     protected Fragment createFragment()
